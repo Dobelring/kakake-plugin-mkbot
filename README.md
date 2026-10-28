@@ -15,8 +15,15 @@
 | 4 | `index.mjs` | 图片/视频节点的 label 过滤 `[1/2]`、`【1/2】` 形态的序号 | 多图聊天记录不再显示序号标记，只发图片（元数据文本保留） |
 | 5 | `index.mjs` | 纯视频平台（抖音/B站/快手/YouTube/TikTok）的视频段放进聊天记录节点，元数据在前、视频随后，不再先单独发一条视频消息 | 解析结果只发一条聊天记录，内含元数据+视频 |
 | 6 | `index.mjs` | 图集/实况混排时主视频段同样放进聊天记录 | 同上 |
+| 7 | `lib/api/proxy-fetch.mjs`（新增）、`lib/api/yt.mjs`、`lib/api/tt.mjs`、`index.mjs` | YouTube/TikTok 解析与媒体下载走 undici ProxyAgent 代理：解析模块经 `ctx.proxy` 注入；媒体下载按域名白名单分流（youtube/googlevideo/ytimg/tiktok/tiktokcdn/byteoversea 等），国内平台保持直连。代理地址读 mkbot `config.json` 的 `"代理"` 键（如 `"http://127.0.0.1:7890"`） | 大陆服务器直连 youtube.com / tiktok.com 不通，上游解析器没有代理通道；需 mihomo/Clash 本地代理 + `npm install undici` |
 
 补丁 5/6 均带兜底：若协议端拒绝「聊天记录内带视频」，自动退回单独发送视频 / 原链接，不会静默失败。
+
+补丁 7 的前置条件：宿主目录安装 `undici`（`npm install undici`），服务器上有可用的本地代理（mihomo/Clash，混合端口如 7890），并在插件数据目录的 `config.json` 里加：
+
+```json
+"代理": "http://127.0.0.1:7890"
+```
 
 ## 安装
 
@@ -31,6 +38,7 @@
 ```bash
 python3 patches/patch_mkbot.py <插件目录>/index.mjs
 python3 patches/patch_video_inside.py <插件目录>/index.mjs
+python3 patches/patch_proxy.py <插件目录>
 ```
 
 补丁 1（blbl.mjs）建议直接参考本分支 `lib/api/blbl.mjs` 移植。

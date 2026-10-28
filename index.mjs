@@ -23794,7 +23794,7 @@ function mkSharpDepsPaths(ctx) {
 }
 const PLUGIN_DIR = path.dirname(fileURLToPath(import.meta.url));
 function mkVideoApiCtx() {
-  return { cookies: mkVideoCookieReadAll(readB) };
+  return { cookies: mkVideoCookieReadAll(readB), proxy: String(readB("config.json", "代理", "") || "").trim() };
 }
 async function mkTestVideoParse(platform, url) {
   const apiNames = { 哔哩哔哩: "blbl", 抖音: "dy", 小红书: "xhs", 快手: "ks" };
@@ -24827,7 +24827,8 @@ async function mkDownloadRangeSegment(url, fh, start, end, timeoutMs) {
   });
   const 段起始 = Date.now();
   try {
-    const res = await fetch(url, {
+    const 代理F = mkUrlNeedsProxy(url) ? await mkEnsureProxiedFetch() : null;
+    const res = await (代理F || fetch)(url, {
       headers: { ...mkBuildDownloadHeaders(url, 0) || {}, Range: `bytes=${start}-${end}` },
       signal: 超时器.signal
     });
@@ -24868,6 +24869,37 @@ async function mkDownloadRangeSegment(url, fh, start, end, timeoutMs) {
   } finally {
     超时器.dispose();
   }
+}
+function mkVideoReadProxyUrl() {
+  return String(readB("config.json", "代理", "") || "").trim();
+}
+function mkUrlNeedsProxy(url) {
+  try {
+    const h = new URL(String(url || "")).hostname;
+    return /(^|\.)(youtube\.com|youtu\.be|googlevideo\.com|ytimg\.com|tiktok\.com|tiktokcdn\.com|tiktokcdn-us\.com|tiktokv\.com|muscdn\.com|byteoversea\.com|ttwstatic\.com|ibyteimg\.com|ipstatp\.com)$/.test(h);
+  } catch {
+    return false;
+  }
+}
+let mkProxiedFetchCache = null;
+let mkProxiedFetchUrl = "";
+async function mkEnsureProxiedFetch() {
+  const proxyUrl = mkVideoReadProxyUrl();
+  if (!proxyUrl) return null;
+  if (mkProxiedFetchCache && mkProxiedFetchUrl === proxyUrl) return mkProxiedFetchCache;
+  try {
+    const mod = await import('undici');
+    const u = mod.default ?? mod;
+    if (typeof u?.fetch === 'function' && u?.ProxyAgent) {
+      const agent = new u.ProxyAgent(proxyUrl);
+      mkProxiedFetchCache = (url2, opts = {}) => u.fetch(url2, { ...opts, dispatcher: agent });
+      mkProxiedFetchUrl = proxyUrl;
+      return mkProxiedFetchCache;
+    }
+  } catch {
+  }
+  mkProxiedFetchUrl = proxyUrl;
+  return null;
 }
 async function mkDownloadFileRanged(url, fullPath, timeoutMs) {
   const total = await mkProbeDownloadTotal(url);
@@ -24952,7 +24984,8 @@ async function mkDownloadFileAttempt(url, fullPath, timeoutMs, startByte) {
   });
   let 落盘字节 = Number(startByte) > 0 ? Number(startByte) : 0;
   try {
-    const res = await fetch(url, {
+    const 代理F = mkUrlNeedsProxy(url) ? await mkEnsureProxiedFetch() : null;
+    const res = await (代理F || fetch)(url, {
       headers: mkBuildDownloadHeaders(url, 落盘字节),
       signal: 超时器.signal
     });
@@ -39910,7 +39943,8 @@ ${视频文件名列表.map((v, i) => `${i + 1}. ${v}`).join("\n")}`)]));
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), Math.max(3e3, Number(timeoutMs) || 15e3));
       try {
-        const res = await fetch(url, {
+        const 代理F = mkUrlNeedsProxy(url) ? await mkEnsureProxiedFetch() : null;
+        const res = await (代理F || fetch)(url, {
           method,
           headers: { ...mkBuildDownloadHeaders(url), ...extraHeaders || {} },
           signal: controller.signal
