@@ -40733,7 +40733,7 @@ ${视频文件名列表.map((v, i) => `${i + 1}. ${v}`).join("\n")}`)]));
             logger.error(`快手解析失败: ${API_shuju["msg"] || API_shuju["code"] || "未知错误"}`);
           }
         } else if (解析方向 == "YouTube") {
-          const API_shuju = await callLocalVideoApi(PLUGIN_DIR, "yt", 解析链接);
+          const API_shuju = await callLocalVideoApi(PLUGIN_DIR, "yt", 解析链接, mkVideoApiCtx());
           if (API_shuju["code"] == 200 && API_shuju["data"]) {
             const 数据 = API_shuju["data"];
             const 标题 = 数据["title"] || "";
@@ -40754,7 +40754,7 @@ ${视频文件名列表.map((v, i) => `${i + 1}. ${v}`).join("\n")}`)]));
             logger.error(`YouTube解析失败: ${API_shuju?.["msg"] || API_shuju?.["code"] || "未知错误"} | 链接=${解析链接}`);
           }
         } else if (解析方向 == "TikTok") {
-          const API_shuju = await callLocalVideoApi(PLUGIN_DIR, "tt", 解析链接);
+          const API_shuju = await callLocalVideoApi(PLUGIN_DIR, "tt", 解析链接, mkVideoApiCtx());
           if (API_shuju["code"] == 200 && API_shuju["data"]) {
             const 数据 = API_shuju["data"];
             const 标题 = 数据["title"] || "";
