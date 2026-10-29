@@ -16,6 +16,7 @@
 | 5 | `index.mjs` | 纯视频平台（抖音/B站/快手/YouTube/TikTok）的视频段放进聊天记录节点，元数据在前、视频随后，不再先单独发一条视频消息 | 解析结果只发一条聊天记录，内含元数据+视频 |
 | 6 | `index.mjs` | 图集/实况混排时主视频段同样放进聊天记录 | 同上 |
 | 7 | `lib/api/proxy-fetch.mjs`（新增）、`lib/api/yt.mjs`、`lib/api/tt.mjs`、`index.mjs` | YouTube/TikTok 解析与媒体下载走 undici ProxyAgent 代理：解析模块经 `ctx.proxy` 注入；媒体下载按域名白名单分流（youtube/googlevideo/ytimg/tiktok/tiktokcdn/byteoversea 等），国内平台保持直连。代理地址读 mkbot `config.json` 的 `"代理"` 键（如 `"http://127.0.0.1:7890"`） | 大陆服务器直连 youtube.com / tiktok.com 不通，上游解析器没有代理通道；需 mihomo/Clash 本地代理 + `npm install undici` |
+| 8 | `index.mjs` | 解析结果只有「元数据 + 单个媒体」（单视频或单图）时直接发普通消息（先元数据文本，后视频/图片），不再包聊天记录；多图/实况等多媒体仍用聊天记录 | 用户偏好：单视频/单图直出更清爽 |
 
 补丁 5/6 均带兜底：若协议端拒绝「聊天记录内带视频」，自动退回单独发送视频 / 原链接，不会静默失败。
 
