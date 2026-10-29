@@ -40499,6 +40499,23 @@ ${视频文件名列表.map((v, i) => `${i + 1}. ${v}`).join("\n")}`)]));
           解析链接 = jsonData?.meta?.detail_1?.qqdocurl;
           解析方向 = "哔哩哔哩";
         }
+        // 通用分享卡片（小红书等）：从卡片 JSON 提取跳转链接
+        if (解析链接 == ``) {
+          let 卡片链接 = String(jsonData?.meta?.news?.jumpUrl || jsonData?.meta?.news?.url || jsonData?.meta?.detail_1?.qqdocurl || "").trim();
+          if (!卡片链接) {
+            let 卡片串 = typeof event.message[0].data.data === "string" ? event.message[0].data.data : JSON.stringify(jsonData);
+            卡片链接 = String(卡片串).replace(/\\\//g, "/").match(/https?:\/\/[^\s"'<>\\]+/i)?.[0] || "";
+          }
+          if (卡片链接) {
+            解析链接 = 卡片链接;
+            if (/b23\.tv|bilibili\.com/i.test(卡片链接)) 解析方向 = "哔哩哔哩";
+            else if (/xhslink\.|xiaohongshu\.com/i.test(卡片链接)) 解析方向 = "小红书";
+            else if (/douyin\.com|iesdouyin\.com/i.test(卡片链接)) 解析方向 = "抖音";
+            else if (/kuaishou\.com/i.test(卡片链接)) 解析方向 = "快手";
+            else if (/youtube\.com|youtu\.be/i.test(卡片链接)) 解析方向 = "YouTube";
+            else if (/tiktok\.com/i.test(卡片链接)) 解析方向 = "TikTok";
+          }
+        }
       }
       const 取链接 = 链接扫描文本.match(/https?:\/\/b23\.tv\/[a-zA-Z0-9]+/i)?.[0] || 链接扫描文本.match(/https?:\/\/(?:www\.)?bilibili\.com\/video\/BV[a-zA-Z0-9]{10}/i)?.[0];
       if (取链接 && 解析链接 == ``) {
